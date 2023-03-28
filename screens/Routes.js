@@ -11,6 +11,9 @@ import TurfBookingDetailsScreen2 from "./TurfBookingDetailsScreen2";
 import TurfBookingDetailsScreen3 from "./TurfBookingDetailsScreen3";
 import TurfBookingDetailsScreen4 from "./TurfBookingDetailsScreen4";
 import TurfBookingDetailsScreen5 from "./TurfBookingDetailsScreen5";
+import PaymentGateway from "./PaymentGateway";
+import transcID from "./transcID";
+import PaymentStatus from "./paymentstatus";
 
 export default function Route({navigation}){
 
@@ -28,7 +31,9 @@ export default function Route({navigation}){
             <Stack.Screen options={{ headerShown: false }} name="Turf3Booking" component={TurfBookingDetailsScreen3} />
             <Stack.Screen options={{ headerShown: false }} name="Turf4Booking" component={TurfBookingDetailsScreen4} />
             <Stack.Screen options={{ headerShown: false }} name="Turf5Booking" component={TurfBookingDetailsScreen5} />
-
+            <Stack.Screen options={{ headerShown: false }} name="PaymentGateway" component={PaymentGateway} />
+            <Stack.Screen options={{ headerShown: false }} name="transciD" component={transcID} />
+            <Stack.Screen options={{ headerShown: false }} name="PaymentStatus" component={PaymentStatus} />
 
         </Stack.Navigator>
     );

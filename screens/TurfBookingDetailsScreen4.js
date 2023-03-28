@@ -122,7 +122,7 @@ export default function TurfBookingDetailsScreen4({navigation}){
                     )}
                 />
                 <TouchableOpacity
-                    onPress={() => (console.log('Pressed'))}
+                    onPress={() => (navigation.navigate('PaymentGateway'))}
                     style={styles.button}
                 >
                     <Text style={styles.buttonText}>Book Turf</Text>

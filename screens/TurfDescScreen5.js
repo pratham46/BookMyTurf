@@ -1,5 +1,5 @@
 import React from 'react'
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native'
+import {Image, Linking, StyleSheet, Text, TouchableOpacity, View} from 'react-native'
 import { auth } from '../firebase'
 import Octicons from "react-native-vector-icons/Octicons";
 import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
@@ -28,7 +28,7 @@ export default function TurfDescScreen5({navigation}){
                     <View style={{flexDirection: 'column', marginTop: 7}}>
                         <View style={{flexDirection: 'row', marginTop: 25, marginLeft: -70}}>
                             <Octicons name='location' color={"#298a3d"} size={25} style={{marginBottom: 7,marginTop: 7, marginEnd: 3}}/>
-                            <Text style={styles.subtitle2}>Open in Map</Text>
+                            <Text style={styles.subtitle2} onPress={() => Linking.openURL('https://g.co/kgs/KHXD7W ')}>Open in Map</Text>
                         </View>
                     </View>
             </View>
@@ -128,6 +128,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 1,
+        marginBottom: 20,
     },
     buttonOutline: {
         backgroundColor: 'rgba(255, 255, 255, 0)',
