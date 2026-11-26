@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "BookMyTurf",
+    "slug": "BookMyTurf",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/adminside.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adminside.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.bookmyturf"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-status-bar",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/mCapture-removebg-preview.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#000000",
+          "imageWidth": 200
+        }
+      ]
+    ],
+    "owner": "pratham46"
+  }
+}

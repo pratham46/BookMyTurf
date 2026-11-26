@@ -1,0 +1,24 @@
+services:
+  bookmyturf:
+    build: .
+    image: bookmyturf-backend:latest
+    container_name: bookmyturf
+    restart: unless-stopped
+    # ponytail: no host port; public only via Traefik HTTPS (host 8090 is Nextcloud)
+    volumes:
+      - ./pb_data:/pb/pb_data
+    networks: [coolify]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.bookmyturf.rule=Host(`bookmyturf.130-210-85-149.sslip.io`)
+      - traefik.http.routers.bookmyturf.entrypoints=https
+      - traefik.http.routers.bookmyturf.tls.certresolver=letsencrypt
+      - traefik.http.routers.bookmyturf-http.rule=Host(`bookmyturf.130-210-85-149.sslip.io`)
+      - traefik.http.routers.bookmyturf-http.entrypoints=http
+      - traefik.http.routers.bookmyturf-http.middlewares=bmt-https
+      - traefik.http.middlewares.bmt-https.redirectscheme.scheme=https
+      - traefik.http.services.bookmyturf.loadbalancer.server.port=8090
+networks:
+  coolify:
+    external: true

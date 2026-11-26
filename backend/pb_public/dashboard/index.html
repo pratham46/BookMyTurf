@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BookMyTurf · Control Panel</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --green: #298a3d; --green-d: #1f6b2f; --green-l: #e5f4e8;
+    --amber: #b7791f; --amber-l: #fdf3dc; --red: #c53030; --red-l: #fde8e8;
+    --ink: #1c2321; --muted: #66716c; --line: #e3e8e5; --bg: #f5f7f6; --card: #fff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; border: 1px solid var(--line); background: #fff; border-radius: 7px; padding: 6px 12px; color: var(--ink); }
+  button:hover { border-color: #c9d2cd; }
+  button.primary { background: var(--green); border-color: var(--green); color: #fff; }
+  button.primary:hover { background: var(--green-d); }
+  button.danger { color: var(--red); }
+  button.danger:hover { background: var(--red-l); border-color: #f3c0c0; }
+  button:disabled { opacity: .5; cursor: default; }
+  input, select, textarea { border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; background: #fff; width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid #b9dfc2; border-color: var(--green); }
+  .hidden { display: none !important; }
+
+  /* login */
+  #login { min-height: 100vh; display: grid; place-items: center; }
+  #login form { background: var(--card); padding: 32px; border-radius: 14px; width: 340px; box-shadow: 0 8px 30px rgba(0,0,0,.06); display: grid; gap: 12px; }
+  #login h1 { margin: 0 0 4px; font-size: 20px; }
+  .err { color: var(--red); min-height: 1.2em; font-size: 13px; }
+
+  /* shell */
+  #app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+  nav { background: #13261a; color: #cfe3d4; padding: 20px 12px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; }
+  nav .brand { color: #fff; font-weight: 700; font-size: 17px; padding: 0 10px 18px; }
+  nav .brand small { display: block; font-weight: 400; color: #8fb79a; font-size: 12px; }
+  nav a { color: inherit; text-decoration: none; padding: 9px 10px; border-radius: 8px; display: flex; justify-content: space-between; }
+  nav a:hover { background: #1d3826; }
+  nav a.on { background: var(--green); color: #fff; }
+  nav .count { background: rgba(255,255,255,.14); border-radius: 10px; padding: 0 7px; font-size: 12px; }
+  nav .foot { margin-top: auto; font-size: 12px; color: #8fb79a; padding: 0 10px; display: grid; gap: 8px; }
+  nav .foot button { background: transparent; color: #cfe3d4; border-color: #2f4d39; }
+  main { padding: 26px 30px 60px; min-width: 0; }
+  header.bar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  header.bar h2 { margin: 0; font-size: 22px; flex: 1; }
+  .tools { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tools input, .tools select { width: auto; min-width: 180px; }
+
+  /* cards */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .stat b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 13px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 18px; overflow: hidden; }
+  .panel h3 { margin: 0; padding: 13px 16px; font-size: 15px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+  .panel h3 a { color: var(--green); font-weight: 500; font-size: 13px; text-decoration: none; }
+  .panel h3 a:hover { text-decoration: underline; }
+
+  /* tables */
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: #fafbfa; font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td .sub { color: var(--muted); font-size: 12.5px; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.actions { white-space: nowrap; text-align: right; }
+  td.actions button { padding: 4px 9px; font-size: 13px; margin-left: 4px; }
+  .thumb { width: 64px; height: 44px; object-fit: cover; border-radius: 6px; background: #e8ecea; display: block; }
+  .empty { padding: 28px; text-align: center; color: var(--muted); }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .b-live, .b-paid { background: var(--green-l); color: var(--green-d); }
+  .b-pending { background: var(--amber-l); color: var(--amber); }
+  .b-rejected, .b-hidden { background: var(--red-l); color: var(--red); }
+  select.status { width: auto; padding: 4px 8px; }
+
+  /* modal */
+  dialog { border: 0; border-radius: 14px; padding: 0; width: min(620px, 94vw); box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+  dialog::backdrop { background: rgba(15,25,20,.45); }
+  dialog form { padding: 22px; display: grid; gap: 12px; }
+  dialog h3 { margin: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+  fieldset { border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px 10px; margin: 0; }
+  legend { font-size: 13px; color: var(--muted); padding: 0 4px; }
+  .checks { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .checks label { display: flex; gap: 5px; align-items: center; color: var(--ink); }
+  .checks input { width: auto; }
+  .row-end { display: flex; justify-content: flex-end; gap: 8px; }
+  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #13261a; color: #fff; padding: 10px 18px; border-radius: 9px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+  @media (max-width: 800px) {
+    #app { grid-template-columns: 1fr; }
+    nav { position: static; height: auto; flex-direction: row; flex-wrap: wrap; }
+    nav .brand, nav .foot { display: none; }
+    main { padding: 18px 14px 50px; }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<section id="login" class="hidden">
+  <form id="loginForm">
+    <h1>BookMyTurf Control Panel</h1>
+    <div class="sub" style="color:var(--muted)">Sign in with the backend superuser account.</div>
+    <input name="email" type="email" placeholder="Email" autocomplete="username" required>
+    <input name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+    <div class="err" id="loginErr"></div>
+    <button class="primary" type="submit">Sign in</button>
+  </form>
+</section>
+
+<div id="app" class="hidden">
+  <nav>
+    <div class="brand">BookMyTurf<small>Control Panel</small></div>
+    <a href="#overview" data-tab="overview">Overview</a>
+    <a href="#turfs" data-tab="turfs">Turfs &amp; owners <span class="count" id="cTurfs"></span></a>
+    <a href="#customers" data-tab="customers">Customers <span class="count" id="cCustomers"></span></a>
+    <a href="#bookings" data-tab="bookings">Bookings <span class="count" id="cBookings"></span></a>
+    <div class="foot">
+      <span id="who"></span>
+      <button id="logout">Sign out</button>
+    </div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
+<div id="toast"></div>
+
+<script type="module">
+import PocketBase from './pocketbase.es.mjs';
+
+const pb = new PocketBase(location.origin);
+pb.autoCancellation(false);
+
+// Same choice lists as backend/pb_migrations/1700000100_schema.js (sports now live on pitches)
+const SLOTS = ["9:00am-11:00am", "12:00pm-2:00pm", "1:00pm-3:00pm", "2:00pm-4:00pm", "3:00pm-5:00pm",
+  "4:00pm-6:00pm", "5:00pm-7:00pm", "6:00pm-8:00pm", "7:00pm-9:00pm", "9:00pm-11:00pm", "11:00pm-1:00am"];
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+// ponytail: loads every record into memory; fine for thousands of rows, switch to paged queries beyond that.
+const db = { users: [], admins: [], turfs: [], pitches: [], bookings: [] };
+const view = { tab: 'overview', q: '', status: '', turf: '', customer: '' };
+
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = (n) => '₹' + Number(n || 0).toLocaleString('en-IN');
+const day = (s) => s ? new Date(s.replace(' ', 'T')).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+const ymd = (s) => new Date(s + 'T00:00:00Z').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+const errText = (e) => [e?.response?.message || e?.message, ...Object.entries(e?.response?.data || {}).map(([k, v]) => `${k}: ${v.message}`)].filter(Boolean).join(' · ');
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600); }
+const matches = (q, ...fields) => !q || fields.join(' ').toLowerCase().includes(q.toLowerCase());
+
+// ---------- auth ----------
+const isSuper = () => pb.authStore.isValid && pb.authStore.record?.collectionName === '_superusers';
+
+$('#loginForm').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  $('#loginErr').textContent = '';
+  try {
+    await pb.collection('_superusers').authWithPassword(f.get('email'), f.get('password'));
+    start();
+  } catch (e) {
+    $('#loginErr').textContent = e.status === 400 ? 'Wrong email or password.' : errText(e);
+  }
+});
+$('#logout').onclick = () => { pb.authStore.clear(); show(); };
+
+function show() {
+  $('#login').classList.toggle('hidden', isSuper());
+  $('#app').classList.toggle('hidden', !isSuper());
+}
+
+async function start() {
+  show();
+  if (!isSuper()) return;
+  try { await pb.collection('_superusers').authRefresh(); } catch { pb.authStore.clear(); return show(); }
+  $('#who').textContent = pb.authStore.record.email;
+  await reload();
+}
+
+async function reload() {
+  try {
+    const [users, admins, turfs, pitches, bookings] = await Promise.all([
+      pb.collection('users').getFullList({ sort: '-created' }),
+      pb.collection('admins').getFullList({ sort: '-created' }),
+      pb.collection('turfs').getFullList({ sort: 'approved,name' }),
+      pb.collection('pitches').getFullList({ sort: 'created' }),
+      pb.collection('bookings').getFullList({ sort: '-date,-created' }),
+    ]);
+    Object.assign(db, { users, admins, turfs, pitches, bookings });
+  } catch (e) {
+    if (e.status === 401 || e.status === 403) { pb.authStore.clear(); return show(); }
+    toast('Could not load data: ' + errText(e));
+  }
+  render();
+}
+
+// ---------- lookups ----------
+const ownerOf = (t) => db.admins.find((a) => a.id === t.owner);
+const turfOf = (id) => db.turfs.find((t) => t.id === id);
+const userOf = (id) => db.users.find((u) => u.id === id);
+const turfOfOwner = (a) => db.turfs.find((t) => t.owner === a.id);
+// turfs ("pitches") inside a venue; the venue's price/sports are a server-kept summary of these
+const pitchesOf = (t) => db.pitches.filter((p) => p.venue === t.id);
+const pitchName = (id) => db.pitches.find((p) => p.id === id)?.name || '';
+const pitchLine = (p) => `${esc(p.name)}: ${p.price ? money(p.price) : 'no price'}, ${esc((p.sports || []).join(', ') || 'no sports')}`;
+const bookingsOf = (pred) => db.bookings.filter(pred);
+const img = (rec, file, thumb) => file ? pb.files.getURL(rec, file, thumb ? { thumb } : undefined) : '';
+
+// ---------- routing ----------
+window.addEventListener('hashchange', () => { view.tab = location.hash.slice(1) || 'overview'; render(); });
+view.tab = location.hash.slice(1) || 'overview';
+
+function render() {
+  document.querySelectorAll('nav a').forEach((a) => a.classList.toggle('on', a.dataset.tab === view.tab));
+  $('#cTurfs').textContent = db.turfs.length;
+  $('#cCustomers').textContent = db.users.length;
+  const pend = db.bookings.filter((b) => b.status === 'pending').length;
+  $('#cBookings').textContent = pend ? `${pend} pending` : db.bookings.length;
+  ({ overview, turfs, customers, bookings }[view.tab] || overview)();
+}
+
+// ---------- overview ----------
+function overview() {
+  const live = db.turfs.filter((t) => t.approved);
+  const waiting = db.turfs.filter((t) => !t.approved);
+  const paid = db.bookings.filter((b) => b.status === 'paid');
+  const pending = db.bookings.filter((b) => b.status === 'pending');
+  $('#main').innerHTML = `
+    <header class="bar"><h2>Overview</h2><div class="tools"><button id="refresh">Refresh</button></div></header>
+    <div class="stats">
+      <div class="stat"><b>${live.length}</b><span>Live turfs</span></div>
+      <div class="stat"><b>${waiting.length}</b><span>Turfs awaiting approval</span></div>
+      <div class="stat"><b>${db.admins.length}</b><span>Turf owners</span></div>
+      <div class="stat"><b>${db.users.length}</b><span>Customers</span></div>
+      <div class="stat"><b>${db.bookings.length}</b><span>Bookings (${pending.length} pending)</span></div>
+      <div class="stat"><b>${money(paid.reduce((s, b) => s + b.amount, 0))}</b><span>Confirmed payments</span></div>
+    </div>
+    <div class="panel"><h3>Turfs awaiting approval <a href="#turfs">All turfs →</a></h3>
+      ${waiting.length ? turfTable(waiting) : '<div class="empty">Nothing waiting. New owner sign-ups show up here.</div>'}</div>
+    <div class="panel"><h3>Latest bookings <a href="#bookings">All bookings →</a></h3>
+      ${db.bookings.length ? bookingTable([...db.bookings].sort((a, b) => b.created.localeCompare(a.created)).slice(0, 8)) : '<div class="empty">No bookings yet.</div>'}</div>`;
+  $('#refresh').onclick = reload;
+  wire();
+}
+
+// ---------- turfs ----------
+function turfs() {
+  const list = db.turfs.filter((t) => {
+    const o = ownerOf(t) || {};
+    return matches(view.q, t.name, t.area, t.address, o.name, o.email, o.phone)
+      && (!view.status || (view.status === 'live') === !!t.approved);
+  });
+  $('#main').innerHTML = `
+    <header class="bar"><h2>Turfs &amp; owners</h2>
+      <div class="tools">
+        <input id="q" placeholder="Search turf, area, owner…" value="${esc(view.q)}">
+        <select id="st"><option value="">All</option><option value="live" ${view.status === 'live' ? 'selected' : ''}>Live</option><option value="hidden" ${view.status === 'hidden' ? 'selected' : ''}>Awaiting approval / hidden</option></select>
+        <button class="primary" id="addOwner">+ Add turf owner</button>
+      </div></header>
+    <div class="panel">${list.length ? turfTable(list) : '<div class="empty">No turfs match.</div>'}</div>`;
+  filters('turfs');
+  $('#addOwner').onclick = addOwnerDialog;
+  wire();
+}
+
+function turfTable(list) {
+  return `<div class="scroll"><table><thead><tr><th></th><th>Venue</th><th>Owner</th><th>From</th><th>Turfs &amp; slots</th><th>Bookings</th><th>Status</th><th></th></tr></thead><tbody>
+  ${list.map((t) => {
+    const o = ownerOf(t) || {};
+    const bs = bookingsOf((b) => b.turf === t.id);
+    return `<tr>
+      <td>${t.cover ? `<img class="thumb" src="${img(t, t.cover, '300x300')}" alt="">` : '<div class="thumb"></div>'}</td>
+      <td><b>${esc(t.name)}</b><div class="sub">${esc(t.area || '—')}${t.phone ? ' · ' + esc(t.phone) : ''}</div></td>
+      <td>${esc(o.name || '—')}<div class="sub">${esc(o.email || '')}${o.phone ? ' · ' + esc(o.phone) : ''}</div></td>
+      <td class="num">${money(t.price)}</td>
+      <td>${pitchesOf(t).map((p) => `<div class="sub">${pitchLine(p)}</div>`).join('') || '<div class="sub">no turfs</div>'}<div class="sub">${(t.slots || []).length} slots · UPI: ${esc(t.upiId || 'not set')}</div></td>
+      <td class="num">${bs.length}<div class="sub">${bs.filter((b) => b.status === 'pending').length} pending</div></td>
+      <td>${t.approved ? '<span class="badge b-live">Live</span>' : '<span class="badge b-pending">Awaiting approval</span>'}</td>
+      <td class="actions">
+        ${t.approved ? `<button data-act="hide" data-id="${t.id}">Hide</button>` : `<button class="primary" data-act="approve" data-id="${t.id}">Approve</button>`}
+        <button data-act="editTurf" data-id="${t.id}">Edit</button>
+        <button data-act="bookingsOfTurf" data-id="${t.id}">Bookings</button>
+        <button data-act="pwOwner" data-id="${o.id || ''}" ${o.id ? '' : 'disabled'}>Password</button>
+        <button class="danger" data-act="delOwner" data-id="${o.id || ''}" ${o.id ? '' : 'disabled'}>Delete</button>
+      </td></tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+
+// ---------- customers ----------
+function customers() {
+  const list = db.users.filter((u) => matches(view.q, u.name, u.email, u.phone, u.location));
+  $('#main').innerHTML = `
+    <header class="bar"><h2>Customers</h2>
+      <div class="tools"><input id="q" placeholder="Search name, email, phone…" value="${esc(view.q)}"></div></header>
+    <div class="panel">${list.length ? `<div class="scroll"><table><thead><tr><th>Customer</th><th>Contact</th><th>Location</th><th>Joined</th><th>Bookings</th><th>Paid</th><th></th></tr></thead><tbody>
+      ${list.map((u) => {
+        const bs = bookingsOf((b) => b.user === u.id);
+        return `<tr>
+          <td><b>${esc(u.name || '—')}</b><div class="sub">${esc(u.email)}</div></td>
+          <td>${esc(u.phone || '—')}</td>
+          <td>${esc(u.location || '—')}</td>
+          <td class="num">${day(u.created)}</td>
+          <td class="num">${bs.length}<div class="sub">${bs.filter((b) => b.status === 'pending').length} pending</div></td>
+          <td class="num">${money(bs.filter((b) => b.status === 'paid').reduce((s, b) => s + b.amount, 0))}</td>
+          <td class="actions">
+            <button data-act="bookingsOfUser" data-id="${u.id}">Bookings</button>
+            <button data-act="editUser" data-id="${u.id}">Edit</button>
+            <button data-act="pwUser" data-id="${u.id}">Password</button>
+            <button class="danger" data-act="delUser" data-id="${u.id}">Delete</button>
+          </td></tr>`;
+      }).join('')}</tbody></table></div>` : '<div class="empty">No customers yet.</div>'}</div>`;
+  filters('customers');
+  wire();
+}
+
+// ---------- bookings ----------
+function bookings() {
+  const list = db.bookings.filter((b) => (!view.status || b.status === view.status)
+    && (!view.turf || b.turf === view.turf)
+    && (!view.customer || b.user === view.customer)
+    && matches(view.q, b.customerName, b.customerEmail, b.customerPhone, b.upiRef, b.slot, b.sport, turfOf(b.turf)?.name));
+  const cust = view.customer && userOf(view.customer);
+  $('#main').innerHTML = `
+    <header class="bar"><h2>Bookings${cust ? ` · ${esc(cust.name || cust.email)}` : ''}</h2>
+      <div class="tools">
+        <input id="q" placeholder="Search customer, UPI ref…" value="${esc(view.q)}">
+        <select id="st"><option value="">Any status</option>${['pending', 'paid', 'rejected'].map((s) => `<option ${view.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+        <select id="tf"><option value="">All turfs</option>${db.turfs.map((t) => `<option value="${t.id}" ${view.turf === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select>
+        ${cust ? '<button id="clearCust">Show all customers</button>' : ''}
+      </div></header>
+    <div class="stats">
+      <div class="stat"><b>${list.length}</b><span>Shown</span></div>
+      <div class="stat"><b>${list.filter((b) => b.status === 'pending').length}</b><span>Pending</span></div>
+      <div class="stat"><b>${money(list.filter((b) => b.status === 'paid').reduce((s, b) => s + b.amount, 0))}</b><span>Confirmed</span></div>
+    </div>
+    <div class="panel">${list.length ? bookingTable(list) : '<div class="empty">No bookings match.</div>'}</div>`;
+  filters('bookings');
+  if (cust) $('#clearCust').onclick = () => { view.customer = ''; render(); };
+  wire();
+}
+
+function bookingTable(list) {
+  return `<div class="scroll"><table><thead><tr><th>Date &amp; slot</th><th>Turf</th><th>Customer</th><th>Sport</th><th>Amount</th><th>UPI ref</th><th>Status</th></tr></thead><tbody>
+  ${list.map((b) => `<tr>
+    <td class="num"><b>${ymd(b.date)}</b><div class="sub">${esc(b.slot)}</div></td>
+    <td>${esc(turfOf(b.turf)?.name || '—')}<div class="sub">${esc(pitchName(b.pitch))}</div></td>
+    <td>${esc(b.customerName || '—')}<div class="sub">${esc(b.customerEmail)}${b.customerPhone ? ' · ' + esc(b.customerPhone) : ''}</div></td>
+    <td>${esc(b.sport)}</td>
+    <td class="num">${money(b.amount)}</td>
+    <td class="num">${esc(b.upiRef)}<div class="sub">booked ${day(b.created)}</div></td>
+    <td><select class="status" data-act="status" data-id="${b.id}">${['pending', 'paid', 'rejected'].map((s) => `<option ${b.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+  </tr>`).join('')}</tbody></table></div>`;
+}
+
+// ---------- shared wiring ----------
+function filters(tab) {
+  const q = $('#q');
+  if (q) q.oninput = () => { view.q = q.value; clearTimeout(filters.t); filters.t = setTimeout(() => { render(); const n = $('#q'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 200); };
+  const st = $('#st'); if (st) st.onchange = () => { view.status = st.value; render(); };
+  const tf = $('#tf'); if (tf) tf.onchange = () => { view.turf = tf.value; render(); };
+}
+document.querySelectorAll('nav a').forEach((a) => a.addEventListener('click', () => { view.q = ''; view.status = ''; view.turf = ''; view.customer = ''; }));
+
+async function run(fn, ok) {
+  try { await fn(); if (ok) toast(ok); } catch (e) { toast(errText(e)); }
+  await reload();
+}
+
+function wire() {
+  document.querySelectorAll('[data-act]').forEach((el) => {
+    const id = el.dataset.id;
+    const act = el.dataset.act;
+    if (act === 'status') {
+      el.onchange = () => run(() => pb.collection('bookings').update(id, { status: el.value }), 'Booking marked ' + el.value);
+      return;
+    }
+    el.onclick = () => ({
+      approve: () => run(() => pb.collection('turfs').update(id, { approved: true }), 'Turf is live'),
+      hide: () => confirm('Hide this turf from customers? Existing bookings stay.') && run(() => pb.collection('turfs').update(id, { approved: false }), 'Turf hidden'),
+      editTurf: () => editTurfDialog(turfOf(id)),
+      bookingsOfTurf: () => { Object.assign(view, { tab: 'bookings', turf: id, status: '', q: '', customer: '' }); location.hash = 'bookings'; render(); },
+      bookingsOfUser: () => { Object.assign(view, { tab: 'bookings', customer: id, status: '', q: '', turf: '' }); location.hash = 'bookings'; render(); },
+      pwOwner: () => passwordDialog('admins', db.admins.find((a) => a.id === id)),
+      pwUser: () => passwordDialog('users', userOf(id)),
+      editUser: () => editUserDialog(userOf(id)),
+      delOwner: () => {
+        const a = db.admins.find((x) => x.id === id); const t = turfOfOwner(a);
+        const n = t ? bookingsOf((b) => b.turf === t.id).length : 0;
+        if (confirm(`Delete owner ${a.email}, their turf "${t?.name || ''}" and its ${n} booking(s)? This cannot be undone.`))
+          run(() => pb.collection('admins').delete(id), 'Owner and turf deleted');
+      },
+      delUser: () => {
+        const u = userOf(id); const n = bookingsOf((b) => b.user === id).length;
+        if (confirm(`Delete customer ${u.email} and their ${n} booking(s)? This cannot be undone.`))
+          run(() => pb.collection('users').delete(id), 'Customer deleted');
+      },
+    }[act]?.());
+  });
+}
+
+// ---------- dialogs ----------
+function dialog(html, onSubmit) {
+  const dlg = $('#dlg'), form = $('#dlgForm');
+  form.innerHTML = html + `<div class="err" id="dlgErr"></div><div class="row-end"><button type="button" id="dlgCancel">Cancel</button><button class="primary" type="submit">Save</button></div>`;
+  $('#dlgCancel').onclick = () => dlg.close();
+  form.onsubmit = async (ev) => {
+    ev.preventDefault();
+    const btn = form.querySelector('[type=submit]'); btn.disabled = true;
+    try { await onSubmit(new FormData(form)); dlg.close(); await reload(); }
+    catch (e) { $('#dlgErr').textContent = errText(e); }
+    finally { btn.disabled = false; }
+  };
+  dlg.showModal();
+}
+const checks = (name, all, on) => `<div class="checks">${all.map((v) => `<label><input type="checkbox" name="${name}" value="${esc(v)}" ${on.includes(v) ? 'checked' : ''}>${esc(v)}</label>`).join('')}</div>`;
+
+function editTurfDialog(t) {
+  dialog(`<h3>Edit venue</h3>
+    <div class="grid2">
+      <label>Name<input name="name" required value="${esc(t.name)}"></label>
+      <label>Area<input name="area" value="${esc(t.area)}"></label>
+      <label>Contact<input name="phone" value="${esc(t.phone)}"></label>
+      <label>UPI ID<input name="upiId" value="${esc(t.upiId)}"></label>
+      <label>Map link<input name="mapUrl" type="url" value="${esc(t.mapUrl)}"></label>
+    </div>
+    <label>Address<textarea name="address" rows="2">${esc(t.address)}</textarea></label>
+    <fieldset><legend>Slots</legend>${checks('slots', SLOTS, t.slots || [])}</fieldset>
+    <fieldset><legend>Turfs (name, price and sports are set by the owner in the app, or in /_/ → pitches)</legend>${pitchesOf(t).map((p) => `<div class="sub">${pitchLine(p)}</div>`).join('') || 'none'}</fieldset>
+    <fieldset><legend>Open days (none ticked = every day)</legend>${checks('openDays', DAYS, t.openDays || [])}</fieldset>
+    <label style="flex-direction:row;display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" name="approved" style="width:auto" ${t.approved ? 'checked' : ''}> Live (visible to customers)</label>`,
+  (f) => pb.collection('turfs').update(t.id, {
+    name: f.get('name').trim(), area: f.get('area').trim(), phone: f.get('phone').trim(),
+    upiId: f.get('upiId').trim(), mapUrl: f.get('mapUrl').trim(), address: f.get('address').trim(),
+    slots: SLOTS.filter((s) => f.getAll('slots').includes(s)), openDays: f.getAll('openDays'),
+    approved: f.get('approved') === 'on',
+  }).then(() => toast('Turf saved')));
+}
+
+function editUserDialog(u) {
+  dialog(`<h3>Edit customer</h3><div class="sub" style="color:var(--muted)">${esc(u.email)}</div>
+    <div class="grid2">
+      <label>Name<input name="name" value="${esc(u.name)}"></label>
+      <label>Contact<input name="phone" value="${esc(u.phone)}"></label>
+      <label>Location<input name="location" value="${esc(u.location)}"></label>
+    </div>`,
+  (f) => pb.collection('users').update(u.id, { name: f.get('name').trim(), phone: f.get('phone').trim(), location: f.get('location').trim() }).then(() => toast('Customer saved')));
+}
+
+function passwordDialog(col, acct) {
+  dialog(`<h3>Set a new password</h3><div style="color:var(--muted)">${esc(acct.email)} — they'll be signed out and must use this password.</div>
+    <label>New password (min 8 characters)<input name="pw" type="text" minlength="8" required autocomplete="off"></label>`,
+  (f) => pb.collection(col).update(acct.id, { password: f.get('pw'), passwordConfirm: f.get('pw') }).then(() => toast('Password changed')));
+}
+
+function addOwnerDialog() {
+  dialog(`<h3>Add turf owner</h3><div style="color:var(--muted)">Creates the owner's login and an empty turf. They fill in details in the owner app; approve it when ready.</div>
+    <div class="grid2">
+      <label>Owner name<input name="name" required></label>
+      <label>Contact<input name="phone"></label>
+      <label>Email (login)<input name="email" type="email" required></label>
+      <label>Password (min 8)<input name="pw" type="text" minlength="8" required autocomplete="off"></label>
+    </div>`,
+  (f) => pb.collection('admins').create({
+    name: f.get('name').trim(), phone: f.get('phone').trim(), email: f.get('email').trim().toLowerCase(),
+    password: f.get('pw'), passwordConfirm: f.get('pw'), verified: true,
+  }).then(() => toast('Owner added — their turf is awaiting approval')));
+}
+
+start();
+</script>
+</body>
+</html>

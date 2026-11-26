@@ -1,0 +1,11 @@
+FROM alpine:3.24
+ARG PB_VERSION=0.40.6
+ARG TARGETARCH
+RUN apk add --no-cache ca-certificates wget unzip \
+ && wget -q https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_${TARGETARCH}.zip -O /tmp/pb.zip \
+ && unzip /tmp/pb.zip pocketbase -d /pb && rm /tmp/pb.zip
+COPY pb_migrations /pb/pb_migrations
+COPY pb_hooks /pb/pb_hooks
+COPY pb_public /pb/pb_public
+EXPOSE 8090
+CMD ["/pb/pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data", "--migrationsDir=/pb/pb_migrations", "--hooksDir=/pb/pb_hooks", "--publicDir=/pb/pb_public"]

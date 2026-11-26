@@ -1,0 +1,20 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.idea/
+.DS_Store
+npm-debug.*
+*.log
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+.env*
+
+# local only
+TEST-LOGINS.md
+iphone-*-qr.png
+backend/pb_data/
